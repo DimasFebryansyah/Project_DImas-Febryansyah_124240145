@@ -1,30 +1,31 @@
 #include <iostream>
 #include <iomanip>
 #include <cstring>
+#include <cstdio> // Untuk FILE handling
 using namespace std;
 
-const int BIOSKOP = 100;
-
-struct film
+// Struktur Node untuk Linked List
+struct Node
 {
     char judul[100];
     int tahun;
-    string genre;
+    char genre[20];
     float rating;
+    Node *next;
 };
 
+// Pointer ke awal daftar film
+Node *head = nullptr;
+
 // Array tipe genre yang valid
-string genreValid[4] = {"horor", "komedi", "action", "romance"};
+char genreValid[4][20] = {"horor", "komedi", "action", "romance"};
 
-film daftarFilm[BIOSKOP];
-int jumlahFilm = 0;
-
-// Pointer untuk mengecek jenis genre yang valid
-bool cekGenreValid(string type)
+// Mengecek apakah genre valid
+bool cekGenreValid(const char *type)
 {
     for (int i = 0; i < 4; i++)
     {
-        if (genreValid[i] == type)
+        if (strcmp(genreValid[i], type) == 0)
         {
             return true;
         }
@@ -32,7 +33,7 @@ bool cekGenreValid(string type)
     return false;
 }
 
-// Optimasi fungsi kembali ke menu
+// Fungsi kembali ke menu dengan validasi input
 bool kembaliKeMenu()
 {
     char pilihan;
@@ -48,7 +49,7 @@ bool kembaliKeMenu()
     } while (true);
 }
 
-// Fungsi Menampilkan Menu
+// Menampilkan Menu
 void tampilkanMenu()
 {
     cout << "\n=== MENU BIOSKOP ===\n"
@@ -61,7 +62,7 @@ void tampilkanMenu()
          << "Pilih menu: ";
 }
 
-// Fungsi FILE Menyimpan data film
+// Menyimpan data film ke file
 void simpanDataFilm()
 {
     FILE *file = fopen("data_film.txt", "w");
@@ -71,68 +72,82 @@ void simpanDataFilm()
         return;
     }
 
-    for (int i = 0; i < jumlahFilm; i++)
+    Node *temp = head;
+    while (temp != nullptr)
     {
         fprintf(file, "%s,%d,%s,%.2f\n",
-                daftarFilm[i].judul,
-                daftarFilm[i].tahun,
-                daftarFilm[i].genre.c_str(),
-                daftarFilm[i].rating);
+                temp->judul,
+                temp->tahun,
+                temp->genre,
+                temp->rating);
+        temp = temp->next;
     }
 
     fclose(file);
 }
 
-// Fungsi untuk menambahkan film
+// Menambahkan film baru ke linked list
 void tambahFilm()
 {
-    film newFilm;
+    Node *newFilm = new Node;
     cout << "\nJudul Film: ";
     cin.ignore();
-    cin.getline(newFilm.judul, 100);
+    cin.getline(newFilm->judul, 100);
 
     cout << "Tahun Film: ";
-    cin >> newFilm.tahun;
+    cin >> newFilm->tahun;
 
     cin.ignore();
     cout << "Genre: ";
-    getline(cin, newFilm.genre);
+    cin.getline(newFilm->genre, 20);
 
-    if (!cekGenreValid(newFilm.genre))
+    if (!cekGenreValid(newFilm->genre))
     {
-        cout << "Error: Genre film tidak valid. Harus salah satu dari: horor, komedi, action, romance.\n";
+        cout << "Error: Genre tidak valid! Harus salah satu dari: horor, komedi, action, romance.\n";
+        delete newFilm;
         return;
     }
 
     cout << "Rating Film: ";
-    cin >> newFilm.rating;
+    cin >> newFilm->rating;
 
-    daftarFilm[jumlahFilm] = newFilm;
-    jumlahFilm++;
+    newFilm->next = head;
+    head = newFilm;
     simpanDataFilm();
+    cout << "Film berhasil ditambahkan!" << endl;
 }
 
-// Fungsi pengurutan film
+// Pengurutan film secara manual dalam linked list
 void urutkanFilm(bool ascending)
 {
-    for (int i = 0; i < jumlahFilm - 1; i++)
+    if (head == nullptr || head->next == nullptr)
+        return;
+
+    bool swapped;
+    do
     {
-        for (int j = 0; j < jumlahFilm - i - 1; j++)
+        swapped = false;
+        Node *temp = head;
+        while (temp->next != nullptr)
         {
-            bool kondisi = ascending ? (daftarFilm[j].rating > daftarFilm[j + 1].rating)
-                                     : (daftarFilm[j].rating < daftarFilm[j + 1].rating);
-            if (kondisi)
+            if ((ascending && temp->rating > temp->next->rating) ||
+                (!ascending && temp->rating < temp->next->rating))
             {
-                swap(daftarFilm[j], daftarFilm[j + 1]);
+                swap(temp->judul, temp->next->judul);
+                swap(temp->tahun, temp->next->tahun);
+                swap(temp->genre, temp->next->genre);
+                swap(temp->rating, temp->next->rating);
+                swapped = true;
             }
+            temp = temp->next;
         }
-    }
+    } while (swapped);
 }
 
-// Fungsi untuk menampilkan film setelah pengurutan
+// Menampilkan film setelah sorting
 void tampilkanFilm(bool ascending)
 {
-    if (jumlahFilm == 0)
+    if (head == nullptr)
     {
         cout << "Belum ada data film." << endl;
         return;
@@ -145,14 +160,16 @@ void tampilkanFilm(bool ascending)
          << setw(10) << "Rating" << endl;
     cout << string(55, '=') << endl;
 
-    for (int i = 0; i < jumlahFilm; i++)
+    Node *temp = head;
+    while (temp != nullptr)
     {
         cout << left
-             << setw(20) << daftarFilm[i].judul
-             << setw(10) << daftarFilm[i].tahun
-             << setw(15) << daftarFilm[i].genre
-             << setw(10) << fixed << setprecision(2) << daftarFilm[i].rating
+             << setw(20) << temp->judul
+             << setw(10) << temp->tahun
+             << setw(15) << temp->genre
+             << setw(10) << fixed << setprecision(2) << temp->rating
              << endl;
+        temp = temp->next;
     }
     cout << string(55, '=') << endl;
 
@@ -162,7 +179,7 @@ void tampilkanFilm(bool ascending)
     }
 }
 
-// Fungsi mencari film
+// **Sequential search untuk pencarian film**
 void cariFilm()
 {
     char judulCari[100];
@@ -170,19 +187,21 @@ void cariFilm()
     cin.ignore();
     cin.getline(judulCari, 100);
 
+    Node *temp = head;
     bool ditemukan = false;
-    for (int i = 0; i < jumlahFilm; i++)
+    while (temp != nullptr)
     {
-        if (strcmp(daftarFilm[i].judul, judulCari) == 0)
+        if (strcmp(temp->judul, judulCari) == 0)
         {
             cout << "\nFilm ditemukan:\n";
-            cout << "Judul: " << daftarFilm[i].judul << endl;
-            cout << "Tahun: " << daftarFilm[i].tahun << endl;
-            cout << "Genre: " << daftarFilm[i].genre << endl;
-            cout << "Rating: " << fixed << setprecision(2) << daftarFilm[i].rating << endl;
+            cout << "Judul: " << temp->judul << endl;
+            cout << "Tahun: " << temp->tahun << endl;
+            cout << "Genre: " << temp->genre << endl;
+            cout << "Rating: " << fixed << setprecision(2) << temp->rating << endl;
             ditemukan = true;
             break;
         }
+        temp = temp->next;
     }
 
     if (!ditemukan)
@@ -196,7 +215,7 @@ void cariFilm()
     }
 }
 
-// Fungsi menghapus film
+// **Menghapus film dari linked list**
 void hapusFilm()
 {
     char judulHapus[100];
@@ -204,21 +223,26 @@ void hapusFilm()
     cin.ignore();
     cin.getline(judulHapus, 100);
 
+    Node *temp = head, *prev = nullptr;
     bool ditemukan = false;
-    for (int i = 0; i < jumlahFilm; i++)
+
+    while (temp != nullptr)
     {
-        if (strcmp(daftarFilm[i].judul, judulHapus) == 0)
+        if (strcmp(temp->judul, judulHapus) == 0)
         {
-            for (int j = i; j < jumlahFilm - 1; j++)
-            {
-                daftarFilm[j] = daftarFilm[j + 1];
-            }
-            jumlahFilm--;
+            if (prev == nullptr)
+                head = temp->next;
+            else
+                prev->next = temp->next;
+
+            delete temp;
             simpanDataFilm();
             cout << "Film berhasil dihapus!" << endl;
             ditemukan = true;
             break;
         }
+        prev = temp;
+        temp = temp->next;
     }
 
     if (!ditemukan)
