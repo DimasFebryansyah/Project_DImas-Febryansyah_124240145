@@ -19,7 +19,20 @@ Node *head = nullptr;
 
 // Array tipe genre yang valid
 char genreValid[4][20] = {"horor", "komedi", "action", "romance"};
-
+bool kembaliKeMenu()
+{
+    char pilihan;
+    do
+    {
+        cout << "\nBalik ke menu? (y/n): ";
+        cin >> pilihan;
+        if (pilihan == 'y' || pilihan == 'Y')
+            return true;
+        if (pilihan == 'n' || pilihan == 'N')
+            return false;
+        cout << "Masukan tidak valid, silakan pilih 'y' atau 'n'.\n";
+    } while (true);
+}
 // Mengecek apakah genre valid
 bool cekGenreValid(const char *type)
 {
@@ -178,6 +191,10 @@ void tampilkanFilm(bool ascending)
         temp = temp->next;
     }
     cout << string(55, '=') << endl;
+    if (!kembaliKeMenu()) // **Tambahkan pilihan balik ke menu**
+    {
+        exit(0);
+    }
 }
 
 // **Menu pencarian film**
@@ -266,6 +283,10 @@ void cariFilm()
     {
         cout << "Film tidak ditemukan." << endl;
     }
+    if (!kembaliKeMenu()) // **Tambahkan pilihan balik ke menu**
+    {
+        exit(0);
+    }
 }
 
 // **Menghapus film dari linked list dan memperbarui file**
@@ -329,7 +350,12 @@ void hapusFilm()
 
     fclose(file);
     cout << "Film berhasil dihapus!" << endl;
+    if (!kembaliKeMenu()) // **Tambahkan pilihan balik ke menu**
+    {
+        exit(0);
+    }
 }
+// **Fungsi untuk kembali ke menu utama atau keluar**
 
 // **Menu utama**
 void tampilkanMenu()
